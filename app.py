@@ -1003,3 +1003,58 @@ def process_audio(audio_bytes, progress_callback=None):
 
 # Extract ID3 Embedded Album Artwork from Audio Bytes
 def extract_id3_image(data: bytes):
+    try:
+        apic_idx = data.find(b'APIC')
+        if apic_idx != -1 and apic_idx < 150000:
+            chunk = data[apic_idx:apic_idx + 1500]
+            jpg_idx = chunk.find(b'\xff\xd8\xff')
+            if jpg_idx != -1:
+                img_start = apic_idx + jpg_idx
+                img_end = data.find(b'\xff\xd9', img_start)
+                if img_end != -1 and (img_end + 2 - img_start) < 10 * 1024 * 1024:
+                    img_bytes = data[img_start:img_end + 2]
+                    return f"data:image/jpeg;base64,{base64.b64encode(img_bytes).decode('utf-8')}"
+            png_idx = chunk.find(b'\x89PNG\r\n\x1a\n')
+            if png_idx != -1:
+                img_start = apic_idx + png_idx
+                img_end = data.find(b'IEND', img_start)
+                if img_end != -1:
+                    img_bytes = data[img_start:img_end + 8]
+                    return f"data:image/png;base64,{base64.b64encode(img_bytes).decode('utf-8')}"
+    except Exception:
+        pass
+    return None
+
+# Direct Audio Link Downloader
+def download_audio_from_url(url):
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        res = requests.get(url, headers=headers, timeout=20, stream=True, allow_redirects=True)
+        if res.status_code != 200:
+            return None, None, f"Server returned HTTP status {res.status_code}. Please verify the link is accessible."
+        
+        content = res.content
+        if len(content) < 3000:
+            return None, None, "The returned file is too small (less than 3 KB) to be a valid audio track."
+        
+        prefix = content[:100].lower()
+        if b'<!doctype html' in prefix or b'<html' in prefix or b'{"error"' in prefix:
+            return None, None, "The provided link points to a webpage rather than a direct audio file. Please provide a direct download link ending in .mp3 or .wav."
+            
+        if len(content) > 40 * 1024 * 1024:
+            return None, None, "The audio file exceeds the 40 MB size limit."
+            
+        thumb = extract_id3_image(content)
+        return content, thumb, None
+    except requests.exceptions.Timeout:
+        return None, None, "Connection timed out while fetching the audio link."
+    except Exception as e:
+        return None, None, f"Failed to download audio link: {str(e)}"
+
+# YouTube Link Audio Extraction via yt-dlp & FFmpeg
+def download_from_youtube(yt_url):
+    try:
+        ffmpeg_bin = get_ffmpeg_cmd()
+        out_tmpl = os.path.join(tempfile.gettempdir(), f"yt_{int(time.time())}_%(id)s.%(ext)s")
