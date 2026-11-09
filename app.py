@@ -1398,3 +1398,153 @@ with tab_classify:
                 </div>
             </div>
             <audio id="pAudio" src="data:{mime};base64,{b64_str}"></audio>
+        </div>
+        <script>
+            const a = document.getElementById('pAudio');
+            const btn = document.getElementById('pBtn');
+            const icon = document.getElementById('pIcon');
+            const fill = document.getElementById('pFill');
+            const track = document.getElementById('pTrack');
+            const pCurr = document.getElementById('pCurr');
+            const pDur = document.getElementById('pDur');
+            const btnRev = document.getElementById('pRev');
+            const btnFwd = document.getElementById('pFwd');
+            const btnLoop = document.getElementById('pLoop');
+            const btnMute = document.getElementById('pMute');
+            const muteIcon = document.getElementById('pMuteIcon');
+            let isPlaying = false;
+
+            function fmt(s) {{
+                if (isNaN(s)) return "0:00";
+                const m = Math.floor(s / 60);
+                const sec = Math.floor(s % 60);
+                return m + ":" + (sec < 10 ? "0" : "") + sec;
+            }}
+
+            function updateDur() {{
+                if (a.duration && !isNaN(a.duration)) pDur.textContent = fmt(a.duration);
+            }}
+
+            a.addEventListener('loadedmetadata', updateDur);
+            a.addEventListener('durationchange', updateDur);
+            a.addEventListener('canplay', updateDur);
+
+            btn.addEventListener('click', () => {{
+                if (isPlaying) {{
+                    a.pause();
+                    isPlaying = false;
+                    icon.innerHTML = '<polygon points="7,4 20,12 7,20"/>';
+                }} else {{
+                    a.play();
+                    isPlaying = true;
+                    icon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+                }}
+            }});
+
+            btnRev.addEventListener('click', () => {{
+                a.currentTime = Math.max(0, a.currentTime - 10);
+            }});
+
+            btnFwd.addEventListener('click', () => {{
+                if (a.duration) a.currentTime = Math.min(a.duration, a.currentTime + 10);
+            }});
+
+            btnLoop.addEventListener('click', () => {{
+                a.loop = !a.loop;
+                btnLoop.style.color = a.loop ? '#1ed760' : '#b3b3b3';
+            }});
+
+            btnMute.addEventListener('click', () => {{
+                a.muted = !a.muted;
+                if (a.muted) {{
+                    btnMute.style.color = '#ff5c5c';
+                    muteIcon.innerHTML = '<line x1="1" y1="1" x2="23" y2="23"></line><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>';
+                }} else {{
+                    btnMute.style.color = '#b3b3b3';
+                    muteIcon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>';
+                }}
+            }});
+
+            a.addEventListener('timeupdate', () => {{
+                if (a.duration) {{
+                    const pct = (a.currentTime / a.duration) * 100;
+                    fill.style.width = pct + '%';
+                    pCurr.textContent = fmt(a.currentTime);
+                    pDur.textContent = fmt(a.duration);
+                }}
+            }});
+
+            a.addEventListener('ended', () => {{
+                if (!a.loop) {{
+                    isPlaying = false;
+                    icon.innerHTML = '<polygon points="7,4 20,12 7,20"/>';
+                    fill.style.width = '0%';
+                    pCurr.textContent = "0:00";
+                }}
+            }});
+
+            track.addEventListener('click', (e) => {{
+                const r = track.getBoundingClientRect();
+                const p = (e.clientX - r.left) / r.width;
+                if (a.duration) a.currentTime = p * a.duration;
+            }});
+        </script>
+        """
+        components.html(player_html, height=145)
+
+    # Main Classify Button
+    has_audio = st.session_state.audio_b64 is not None
+    st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+    classify_btn = st.button("RUN GENRE INFERENCE", disabled=not has_audio)
+
+    # Inference Execution with Dynamic Step-by-Step Status
+    if classify_btn and (st.session_state.audio_clean_wav is not None or st.session_state.audio_b64 is not None):
+        status_box = st.empty()
+
+        def update_progress(msg: str):
+            status_box.markdown(f"""
+            <div style="background: #181818; box-shadow: rgba(0,0,0,0.5) 0px 8px 24px; border-radius: 12px; padding: 32px 24px; text-align: center; margin: 24px 0; border: 1px solid #282828;">
+                <div style="display: inline-block; width: 44px; height: 44px; border: 4px solid rgba(30, 215, 96, 0.2); border-top-color: #1ed760; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                <div style="font-size: 20px; font-weight: 800; color: #ffffff; margin-top: 16px;">Decomposing Acoustic Spectral Timbre...</div>
+                <div style="font-size: 14px; color: #1ed760; font-weight: 600; margin-top: 8px;">{msg}</div>
+            </div>
+            <style>
+                @keyframes spin {{ to {{ transform: rotate(360deg); }} }}
+            </style>
+            """, unsafe_allow_html=True)
+
+        try:
+            target_audio = st.session_state.audio_clean_wav
+            if not target_audio and st.session_state.audio_b64:
+                target_audio = base64.b64decode(st.session_state.audio_b64)
+
+            t0 = time.time()
+            feats, mfcc_13, mean_cent, mean_roll, mean_zcr, est_tempo = process_audio(target_audio, progress_callback=update_progress)
+            scaled = scaler.transform(feats)
+            pred = model.predict(scaled)[0]
+            genre = encoder.inverse_transform([pred])[0]
+            probs = model.predict_proba(scaled)[0]
+            ms = round((time.time() - t0) * 1000, 1)
+
+            top5 = []
+            for idx in np.argsort(probs)[::-1][:5]:
+                top5.append({
+                    "genre": encoder.classes_[idx].capitalize(),
+                    "score": round(float(probs[idx] * 100), 1)
+                })
+
+            st.session_state.result = {
+                "genre": genre.capitalize(),
+                "confidence": round(float(np.max(probs) * 100), 1),
+                "top5": top5,
+                "mfcc_means": mfcc_13,
+                "inference_ms": ms,
+                "spectral_centroid": round(mean_cent),
+                "spectral_rolloff": round(mean_roll),
+                "zcr": round(mean_zcr, 4),
+                "tempo": round(est_tempo, 1),
+            }
+
+            entry = {
+                "genre": genre.capitalize(),
+                "confidence": round(float(np.max(probs) * 100), 1),
