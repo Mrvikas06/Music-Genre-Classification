@@ -78,3 +78,54 @@ def train_baseline_models(data_path="data/features_30_sec.csv", output_dir="mode
 
     # ---------------------------------------------------------
     # 07. Train a Support Vector Machine (SVM) Classifier
+    # ---------------------------------------------------------
+    print("--- Training Support Vector Machine (SVM) ---")
+    svm_clf = SVC(kernel="rbf", probability=True, random_state=42)
+    svm_clf.fit(X_train_scaled, y_train)
+    models["SVM"] = svm_clf
+
+    # ---------------------------------------------------------
+    # 08. Train a Random Forest Classifier
+    # ---------------------------------------------------------
+    print("--- Training Random Forest Classifier ---")
+    rf_clf = RandomForestClassifier(n_estimators=150, max_depth=15, random_state=42, n_jobs=-1)
+    rf_clf.fit(X_train_scaled, y_train)
+    models["RandomForest"] = rf_clf
+
+    # ---------------------------------------------------------
+    # 09. Evaluate Trained Models and Calculate Accuracy
+    # ---------------------------------------------------------
+    print("\n================== Model Evaluation ==================")
+    for name, model in models.items():
+        y_pred = model.predict(X_test_scaled)
+        acc = accuracy_score(y_test, y_pred)
+        scores[name] = acc
+        print(f"\n{name} Test Accuracy: {acc * 100:.2f}%")
+        print(f"Classification Report for {name}:\n")
+        print(classification_report(y_test, y_pred, target_names=label_encoder.classes_))
+
+    best_model_name = max(scores, key=scores.get)
+    print(f"Best Performing Model: {best_model_name} ({scores[best_model_name] * 100:.2f}%)")
+
+    # ---------------------------------------------------------
+    # 10. Save Trained Machine Learning Models and Scaler
+    # ---------------------------------------------------------
+    os.makedirs(output_dir, exist_ok=True)
+    joblib.dump(scaler, os.path.join(output_dir, "scaler.pkl"))
+    joblib.dump(label_encoder, os.path.join(output_dir, "label_encoder.pkl"))
+    joblib.dump(list(X.columns), os.path.join(output_dir, "feature_names.pkl"))
+
+    # Save all models as well as the standard genre_classifier.pkl (pointing to best model)
+    for name, model in models.items():
+        model_filename = os.path.join(output_dir, f"{name.lower()}_model.pkl")
+        joblib.dump(model, model_filename)
+        print(f"Saved: {model_filename}")
+
+    # Standard primary classifier used by main.py
+    joblib.dump(models[best_model_name], os.path.join(output_dir, "genre_classifier.pkl"))
+    print(f"Primary classifier saved to: {os.path.join(output_dir, 'genre_classifier.pkl')}")
+    print(f"\nAll models, scaler, and encoders successfully saved to '{output_dir}'.")
+
+
+if __name__ == "__main__":
+    train_baseline_models()
