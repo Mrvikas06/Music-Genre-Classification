@@ -948,3 +948,58 @@ def process_audio(audio_bytes, progress_callback=None):
     S = np.abs(D)
     S2 = S ** 2
 
+    # Spectral features computed directly from S / S2
+    chroma_stft = librosa.feature.chroma_stft(S=S2, sr=sr)
+    spec_cent = librosa.feature.spectral_centroid(S=S, sr=sr)
+    spec_bw = librosa.feature.spectral_bandwidth(S=S, sr=sr)
+    rolloff = librosa.feature.spectral_rolloff(S=S, sr=sr)
+
+    # Mel-spectrogram & 20 MFCCs computed directly from S2
+    mel_spec = librosa.feature.melspectrogram(S=S2, sr=sr)
+    log_mel = librosa.power_to_db(mel_spec)
+    mfccs_full = librosa.feature.mfcc(S=log_mel, sr=sr, n_mfcc=20)
+    del mel_spec, log_mel, S2
+
+    if progress_callback:
+        progress_callback("Separating harmonic/percussive timbre & tempo estimation...")
+
+    # HPSS decomposition with direct memory freeing
+    H, P = librosa.decompose.hpss(D, margin=1.0)
+    del D
+    harmony = librosa.istft(H, length=len(signal))
+    del H
+    perceptr = librosa.istft(P, length=len(signal))
+    del P
+    del S
+    gc.collect()
+
+    tempo_res, _ = librosa.beat.beat_track(y=signal, sr=sr)
+    est_tempo = float(tempo_res) if np.isscalar(tempo_res) else float(tempo_res[0])
+
+    feats = [
+        np.mean(chroma_stft), np.var(chroma_stft),
+        np.mean(rms), np.var(rms),
+        np.mean(spec_cent), np.var(spec_cent),
+        np.mean(spec_bw), np.var(spec_bw),
+        np.mean(rolloff), np.var(rolloff),
+        np.mean(zcr), np.var(zcr),
+        np.mean(harmony), np.var(harmony),
+        np.mean(perceptr), np.var(perceptr),
+        est_tempo,
+    ]
+    for i in range(20):
+        feats.append(np.mean(mfccs_full[i]))
+        feats.append(np.var(mfccs_full[i]))
+
+    mfcc_13 = [float(np.mean(mfccs_full[i])) for i in range(13)]
+    mean_cent = float(np.mean(spec_cent))
+    mean_roll = float(np.mean(rolloff))
+    mean_zcr = float(np.mean(zcr))
+
+    if progress_callback:
+        progress_callback("Evaluating SVM RBF Kernel classification...")
+
+    return np.array(feats, dtype=np.float32).reshape(1, -1), mfcc_13, mean_cent, mean_roll, mean_zcr, est_tempo
+
+# Extract ID3 Embedded Album Artwork from Audio Bytes
+def extract_id3_image(data: bytes):
