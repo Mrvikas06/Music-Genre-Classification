@@ -448,3 +448,203 @@ render_html("""
     [data-testid="stFileUploaderDropzone"] button:hover,
     [data-testid="stFileUploadDropzone"] button:hover,
     [data-testid="stFileUploader"] section button:hover {
+        background: #2a2a2a !important;
+        border-color: #1ed760 !important;
+        color: #1ed760 !important;
+        transform: scale(1.02) !important;
+    }
+    [data-testid="stFileUploaderDropzone"] button:hover *,
+    [data-testid="stFileUploadDropzone"] button:hover *,
+    [data-testid="stFileUploader"] section button:hover * {
+        color: #1ed760 !important;
+        fill: #1ed760 !important;
+    }
+
+    /* File Uploader File Card & Delete Cross (✕) Button */
+    [data-testid="stFileUploaderFile"] {
+        background: #181818 !important;
+        border: 1px solid #282828 !important;
+        border-radius: 12px !important;
+        padding: 10px 14px !important;
+        margin-top: 10px !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+    [data-testid="stFileUploaderDeleteBtn"] {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+    }
+    [data-testid="stFileUploaderDeleteBtn"] button,
+    [data-testid="stFileUploaderFile"] button {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 50% !important;
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        max-width: 32px !important;
+        min-height: 32px !important;
+        max-height: 32px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: #b3b3b3 !important;
+        cursor: pointer !important;
+        outline: none !important;
+        box-shadow: none !important;
+        transition: all 160ms ease !important;
+    }
+    /* Preserve transparent SVG bounding box to prevent solid grey square */
+    [data-testid="stFileUploaderDeleteBtn"] button svg,
+    [data-testid="stFileUploaderFile"] button svg {
+        width: 18px !important;
+        height: 18px !important;
+        color: #b3b3b3 !important;
+        background: transparent !important;
+    }
+    [data-testid="stFileUploaderDeleteBtn"] button svg path[fill="none"],
+    [data-testid="stFileUploaderFile"] button svg path[fill="none"] {
+        fill: none !important;
+    }
+
+    [data-testid="stFileUploaderDeleteBtn"] button:hover,
+    [data-testid="stFileUploaderFile"] button:hover {
+        background: rgba(239, 68, 68, 0.2) !important;
+        border-color: rgba(239, 68, 68, 0.6) !important;
+        color: #ef4444 !important;
+        transform: scale(1.08) !important;
+    }
+    [data-testid="stFileUploaderDeleteBtn"] button:hover svg,
+    [data-testid="stFileUploaderFile"] button:hover svg {
+        color: #ef4444 !important;
+    }
+
+    /* Text Input (Unified Single-Border Pill) */
+    [data-testid="stTextInput"] {
+        border: none !important;
+        background: transparent !important;
+    }
+    [data-testid="stTextInput"] > div,
+    [data-testid="stTextInput"] [data-baseweb="base-input"] {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+    [data-testid="stTextInput"] [data-baseweb="input"] {
+        background: #181818 !important;
+        border: 1px solid #383838 !important;
+        border-radius: 9999px !important;
+        box-shadow: none !important;
+        outline: none !important;
+        overflow: hidden !important;
+        transition: all 180ms ease !important;
+    }
+    [data-testid="stTextInput"] [data-baseweb="input"]:focus-within,
+    [data-testid="stTextInput"] [data-baseweb="input"]:hover {
+        border-color: #1ed760 !important;
+        box-shadow: 0 0 0 2px rgba(30, 215, 96, 0.35) !important;
+    }
+    [data-testid="stTextInput"] input {
+        background: transparent !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 9999px !important;
+        padding: 14px 22px !important;
+        font-size: 14.5px !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+    [data-testid="stTextInput"] input:focus {
+        border: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+
+    /* CTA Pill Buttons */
+    [data-testid="stButton"] > button,
+    [data-testid="stFormSubmitButton"] > button {
+        width: 100% !important;
+        background: #1ed760 !important;
+        border: none !important;
+        color: #000000 !important;
+        font-size: 14.5px !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1.5px !important;
+        border-radius: 9999px !important;
+        padding: 13px 28px !important;
+        min-height: 48px !important;
+        height: 48px !important;
+        margin-top: 0 !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+        transition: all 160ms ease !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    [data-testid="stButton"] > button:hover:not(:disabled),
+    [data-testid="stFormSubmitButton"] > button:hover:not(:disabled) {
+        background: #1fdf64 !important;
+        transform: scale(1.02) !important;
+        box-shadow: 0 10px 28px rgba(30, 215, 96, 0.4) !important;
+    }
+    [data-testid="stButton"] > button:active:not(:disabled),
+    [data-testid="stFormSubmitButton"] > button:active:not(:disabled) {
+        transform: scale(0.99) !important;
+    }
+    [data-testid="stButton"] > button:disabled,
+    [data-testid="stFormSubmitButton"] > button:disabled {
+        opacity: 0.35 !important;
+        background: #242424 !important;
+        color: #7c7c7c !important;
+        cursor: not-allowed !important;
+        box-shadow: none !important;
+    }
+
+    /* Premium Secondary / Clear / Close Action Pill Buttons */
+    button[kind="secondary"],
+    [data-testid="stButton"] > button[kind="secondary"],
+    [data-testid="stFormSubmitButton"] > button[kind="secondary"],
+    [data-testid="baseButton-secondary"] {
+        background: #181818 !important;
+        background-color: #181818 !important;
+        color: #e4e4e7 !important;
+        border: 1px solid #333333 !important;
+        border-radius: 9999px !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+        font-size: 12.5px !important;
+        font-weight: 750 !important;
+        letter-spacing: 0.8px !important;
+        padding: 7px 18px !important;
+        min-height: 38px !important;
+        height: 38px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 180ms ease !important;
+    }
+    [data-testid="stFormSubmitButton"] > button[kind="secondary"] {
+        min-height: 48px !important;
+        height: 48px !important;
+    }
+    button[kind="secondary"]:hover:not(:disabled),
+    [data-testid="stButton"] > button[kind="secondary"]:hover:not(:disabled),
+    [data-testid="stFormSubmitButton"] > button[kind="secondary"]:hover:not(:disabled),
+    [data-testid="baseButton-secondary"]:hover:not(:disabled) {
+        background: rgba(239, 68, 68, 0.15) !important;
+        background-color: rgba(239, 68, 68, 0.15) !important;
+        color: #ff6b6b !important;
+        border-color: rgba(239, 68, 68, 0.5) !important;
+        box-shadow: 0 4px 16px rgba(239, 68, 68, 0.25) !important;
+        transform: scale(1.02) !important;
+    }
+
