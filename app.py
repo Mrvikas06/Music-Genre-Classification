@@ -863,3 +863,88 @@ def prepare_audio_for_player_and_model(raw_bytes: bytes, ext: str = ".wav"):
         preview_mp3 = raw_bytes if len(raw_bytes) <= 15 * 1024 * 1024 else (clean_wav or raw_bytes)
 
     return clean_wav, preview_mp3
+
+def process_audio(audio_bytes, progress_callback=None):
+    signal = None
+    sr = 22050
+    ffmpeg_bin = get_ffmpeg_cmd()
+
+    if progress_callback:
+        progress_callback("Decoding & standardizing 30-second waveform...")
+
+    # 1. Fast in-memory decoding via soundfile if already WAV
+    try:
+        signal, file_sr = sf.read(io.BytesIO(audio_bytes), dtype='float32')
+        if len(signal.shape) > 1:
+            signal = np.mean(signal, axis=1)
+        if file_sr != 22050:
+            signal = librosa.resample(signal, orig_sr=file_sr, target_sr=22050)
+        sr = 22050
+    except Exception:
+        signal = None
+
+    # 2. Decode via ffmpeg if signal is not yet loaded
+    if signal is None or len(signal) == 0:
+        ext = detect_audio_extension(audio_bytes)
+        in_tmp = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
+        in_tmp.write(audio_bytes)
+        in_tmp.close()
+        out_wav = tempfile.NamedTemporaryFile(delete=False, suffix='.wav')
+        out_wav.close()
+        try:
+            cmd = [
+                ffmpeg_bin, '-nostdin', '-y',
+                '-i', in_tmp.name,
+                '-t', '30',
+                '-ar', '22050',
+                '-ac', '1',
+                '-c:a', 'pcm_s16le',
+                out_wav.name
+            ]
+            res = subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True, timeout=25)
+            if res.returncode == 0 and os.path.exists(out_wav.name) and os.path.getsize(out_wav.name) > 0:
+                signal, sr = sf.read(out_wav.name, dtype='float32')
+        except Exception:
+            pass
+        finally:
+            for p in [in_tmp.name, out_wav.name]:
+                if os.path.exists(p):
+                    try: os.remove(p)
+                    except Exception: pass
+
+    # 3. Fallback to librosa.load if still None
+    if signal is None or len(signal) == 0:
+        ext = detect_audio_extension(audio_bytes)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as f:
+            f.write(audio_bytes)
+            tmp = f.name
+        try:
+            signal, sr = librosa.load(tmp, sr=22050, duration=30, mono=True)
+        finally:
+            if os.path.exists(tmp):
+                try: os.remove(tmp)
+                except Exception: pass
+
+    if signal is None or len(signal) == 0:
+        raise ValueError("Could not decode audio stream into waveform. Please ensure the file is an uncorrupted WAV or MP3.")
+
+    # Enforce standard 30-second duration at 22,050 Hz (exact 661,500 samples)
+    max_len = 30 * sr
+    if len(signal) > max_len:
+        signal = signal[:max_len]
+    elif len(signal) < max_len:
+        signal = np.pad(signal, (0, max_len - len(signal)))
+    signal = np.ascontiguousarray(signal, dtype=np.float32)
+
+    if progress_callback:
+        progress_callback("Extracting spectral dynamics (STFT, Centroid, Rolloff, Chroma)...")
+
+    # Time-domain features
+    zcr = librosa.feature.zero_crossing_rate(signal)
+    rms = librosa.feature.rms(y=signal)
+
+    # Compute STFT once and reuse magnitude & power spectrograms to minimize memory & CPU
+    D = librosa.stft(signal, n_fft=2048, hop_length=512)
+    S = np.abs(D)
+    S2 = S ** 2
+
