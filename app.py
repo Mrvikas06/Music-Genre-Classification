@@ -1698,3 +1698,123 @@ with tab_classify:
             render_html(f"""
             <div class="scroll-reveal" style="background: #181818; box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 8px; border-radius: 10px; padding: 24px;">
                 <div style="font-size: 11px; font-weight: 800; color: #b3b3b3; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px;">ZERO-CROSSING RATE</div>
+                <div style="font-size: 26px; font-weight: 800; color: #1ed760;">{res['zcr']}</div>
+                <div style="font-size: 13px; color: #7c7c7c; margin-top: 4px;">Percussive noisiness index</div>
+            </div>
+            """)
+
+        with m4:
+            render_html(f"""
+            <div class="scroll-reveal" style="background: #181818; box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 8px; border-radius: 10px; padding: 24px;">
+                <div style="font-size: 11px; font-weight: 800; color: #b3b3b3; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px;">ESTIMATED TEMPO</div>
+                <div style="font-size: 26px; font-weight: 800; color: #ffffff;">{res['tempo']} BPM</div>
+                <div style="font-size: 13px; color: #7c7c7c; margin-top: 4px;">Beat tracker periodicity</div>
+            </div>
+            """)
+
+# =============================================================================
+# TAB 2: GENRE BENTO GRID (Completely Redesigned Interactive Format)
+# =============================================================================
+with tab_taxonomy:
+    render_html("""
+    <div style="margin-bottom: 26px;">
+        <span style="font-size: 12px; font-weight: 800; color: #1ed760; letter-spacing: 1.5px; text-transform: uppercase;">
+            ACOUSTIC ARCHETYPE CATALOG
+        </span>
+        <h2 style="font-size: clamp(2rem, 1.5rem + 1.5vw, 2.6rem); font-weight: 800; color: #ffffff; margin: 6px 0 8px 0; letter-spacing: -0.03em;">
+            10 Recognized Musical Genres
+        </h2>
+        <p style="font-size: 15px; color: #b3b3b3; margin: 0;">
+            Interactive Bento grid showcasing acoustic profiles, rhythm envelopes, and signature spectral fingerprints from the benchmark GTZAN dataset.
+        </p>
+    </div>
+    """)
+
+    genre_keys = list(GENRE_TAXONOMY.keys())
+    for row_idx in range(0, len(genre_keys), 2):
+        g1, g2 = st.columns(2)
+        k1 = genre_keys[row_idx]
+        k2 = genre_keys[row_idx + 1] if row_idx + 1 < len(genre_keys) else None
+
+        d1 = GENRE_TAXONOMY[k1]
+        with g1:
+            render_html(f"""
+            <div class="scroll-reveal" style="background: radial-gradient(circle at 10% 20%, {d1['bg_tint']} 0%, #181818 55%); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 24px; margin-bottom: 20px; box-shadow: rgba(0,0,0,0.35) 0 8px 20px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 44px; height: 44px; border-radius: 10px; background: {d1['color']}; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 14px rgba(0,0,0,0.4);">
+                            {d1['icon']}
+                        </div>
+                        <div>
+                            <div style="font-size: 19px; font-weight: 800; color: #ffffff;">{d1['title']}</div>
+                            <div style="font-size: 12px; color: #b3b3b3;">{d1['origin']} • {d1['era']}</div>
+                        </div>
+                    </div>
+                    <span style="background: rgba(30, 215, 96, 0.15); color: #1ed760; border: 1px solid rgba(30, 215, 96, 0.3); padding: 5px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800;">
+                        {d1['tempo_range']}
+                    </span>
+                </div>
+                <p style="font-size: 13.5px; color: #cccccc; line-height: 1.6; margin: 0 0 12px 0;">{d1['desc']}</p>
+                <div style="background: #141414; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #8c8c8c; border: 1px solid #222222;">
+                    <strong style="color: #ffffff;">Timbre Signature:</strong> {d1['key_marker']}
+                </div>
+            </div>
+            """)
+
+        if k2:
+            d2 = GENRE_TAXONOMY[k2]
+            with g2:
+                render_html(f"""
+                <div class="scroll-reveal" style="background: radial-gradient(circle at 10% 20%, {d2['bg_tint']} 0%, #181818 55%); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 24px; margin-bottom: 20px; box-shadow: rgba(0,0,0,0.35) 0 8px 20px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 44px; height: 44px; border-radius: 10px; background: {d2['color']}; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 14px rgba(0,0,0,0.4);">
+                                {d2['icon']}
+                            </div>
+                            <div>
+                                <div style="font-size: 19px; font-weight: 800; color: #ffffff;">{d2['title']}</div>
+                                <div style="font-size: 12px; color: #b3b3b3;">{d2['origin']} • {d2['era']}</div>
+                            </div>
+                        </div>
+                        <span style="background: rgba(30, 215, 96, 0.15); color: #1ed760; border: 1px solid rgba(30, 215, 96, 0.3); padding: 5px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800;">
+                            {d2['tempo_range']}
+                        </span>
+                    </div>
+                    <p style="font-size: 13.5px; color: #cccccc; line-height: 1.6; margin: 0 0 12px 0;">{d2['desc']}</p>
+                    <div style="background: #141414; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #8c8c8c; border: 1px solid #222222;">
+                        <strong style="color: #ffffff;">Timbre Signature:</strong> {d2['key_marker']}
+                    </div>
+                </div>
+                """)
+
+# =============================================================================
+# TAB 3: MODEL BENCHMARK & DSP PIPELINE
+# =============================================================================
+with tab_benchmark:
+    render_html("""
+    <div style="margin-bottom: 26px;">
+        <span style="font-size: 12px; font-weight: 800; color: #1ed760; letter-spacing: 1.5px; text-transform: uppercase;">
+            SYSTEM METRICS & SPECIFICATIONS
+        </span>
+        <h2 style="font-size: clamp(2rem, 1.5rem + 1.5vw, 2.6rem); font-weight: 800; color: #ffffff; margin: 6px 0 8px 0; letter-spacing: -0.03em;">
+            Machine Learning Architecture
+        </h2>
+        <p style="font-size: 15px; color: #b3b3b3; margin: 0;">
+            Mathematical breakdown of digital signal processing features and benchmark classification performance.
+        </p>
+    </div>
+    """)
+
+    render_html("""
+    <div class="scroll-reveal" style="background: #181818; box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 8px; border-radius: 12px; padding: 30px; margin-bottom: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; border-bottom: 1px solid #282828; padding-bottom: 16px;">
+            <span style="font-size: 17px; font-weight: 800; color: #ffffff;">
+                Pipeline Specifications
+            </span>
+            <span style="background: #242424; color: #1ed760; padding: 5px 14px; border-radius: 9999px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px;">
+                Librosa DSP + Scikit-Learn
+            </span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 26px; font-size: 14px;">
+            <div>
+                <div style="color: #b3b3b3; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 6px;">CHAMPION MODEL</div>
