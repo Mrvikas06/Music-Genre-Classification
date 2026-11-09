@@ -48,3 +48,59 @@ Music-Genre-Classification/
 Confusion matrix comparisons are available at `models/confusion_matrices.png`.
 
 ---
+
+## 🚀 Quick Start
+
+### 1. Installation
+```bash
+python -m venv venv
+.\venv\Scripts\activate   # On Windows
+source venv/bin/activate  # On macOS/Linux
+
+pip install -r requirements.txt
+```
+
+### 2. Train Models & Evaluate
+```bash
+# Train baseline models
+python train.py
+
+# Train 1D CNN
+python train_cnn.py
+
+# Run comprehensive evaluation and generate heatmaps
+python evaluate_models.py
+```
+
+### 3. Launch Interactive Web App (Streamlit)
+```bash
+streamlit run app.py
+```
+Open your browser at `http://localhost:8501`, upload any `.wav` or `.mp3` audio track, and view the predicted genre with confidence breakdown.
+
+---
+
+## 🐳 Docker Deployment
+
+### 1. Build Docker Image
+```bash
+docker build -t music-genre-classifier .
+```
+
+### 2. Run Docker Container
+```bash
+docker run -p 8501:8501 music-genre-classifier
+```
+Access the application at `http://localhost:8501`.
+
+---
+
+## ☁️ Deploy to Streamlit Community Cloud
+1. Push this repository to GitHub:
+   ```bash
+   git add .
+   git commit -m "Complete ML pipeline, EDA, CNN, Streamlit app, and Docker setup"
+   git push origin main
+   ```
+2. Log into [share.streamlit.io](https://share.streamlit.io).
+3. Select your repository, set the main file path to `app.py`, and click **Deploy**!
