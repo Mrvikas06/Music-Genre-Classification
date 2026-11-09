@@ -1133,3 +1133,118 @@ render_html("""
     </div>
 </div>
 """)
+
+# -----------------------------------------------------------------------------
+# APP TABS NAVIGATION
+# -----------------------------------------------------------------------------
+tab_classify, tab_taxonomy, tab_benchmark, tab_history = st.tabs([
+    "🎧 Classify Audio",
+    "📚 Genre Bento Grid",
+    "📊 Model Benchmark & DSP",
+    "🕒 Session History"
+])
+
+# =============================================================================
+# TAB 1: CLASSIFY AUDIO (Landing View)
+# =============================================================================
+with tab_classify:
+    # Zoomed Modern Hero Header
+    render_html("""
+    <div style="margin-bottom: 28px;">
+        <h1 style="font-size: clamp(2.3rem, 1.8rem + 2.5vw, 3.5rem); font-weight: 800; color: #ffffff; line-height: 1.1; letter-spacing: -0.04em; margin: 0 0 12px 0;">
+            Music Genre Classification
+        </h1>
+        <p style="font-size: clamp(1.05rem, 0.95rem + 0.4vw, 1.2rem); color: #e4e4e7; line-height: 1.6; max-width: 900px; margin: 0;">
+            Analyze, decompose, and classify acoustic music tracks across 57 spectral timbre dimensions in real time using Librosa digital signal processing and machine learning.
+        </p>
+    </div>
+    """)
+
+    # Input Method Selection
+    input_method = st.radio(
+        "Input Mode",
+        ["📁 Upload Audio File", "🔗 Audio Link or YouTube Video"],
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+
+    if input_method == "📁 Upload Audio File":
+        uploaded_file = st.file_uploader(
+            "Upload Track (.wav, .mp3)",
+            type=["wav", "mp3"],
+            label_visibility="collapsed",
+            key=f"uploader_{st.session_state.get('uploader_key', 0)}"
+        )
+        if uploaded_file is not None:
+            if uploaded_file.file_id != st.session_state.last_file_id:
+                st.session_state.last_file_id = uploaded_file.file_id
+                st.session_state.result = None
+                raw_b = uploaded_file.read()
+                clean_wav, preview_mp3 = prepare_audio_for_player_and_model(raw_b, ext=detect_audio_extension(raw_b))
+                st.session_state.audio_clean_wav = clean_wav
+                st.session_state.audio_b64 = base64.b64encode(preview_mp3).decode("utf-8")
+                st.session_state.audio_name = uploaded_file.name
+                st.session_state.audio_size = f"{len(raw_b)/(1024*1024):.1f} MB"
+                st.session_state.audio_thumb = extract_id3_image(raw_b)
+                uploaded_file.seek(0)
+        else:
+            # When the user clicks the file uploader's 'x' (cross) button to remove the file
+            if st.session_state.last_file_id is not None and not str(st.session_state.last_file_id).startswith("http"):
+                st.session_state.audio_b64 = None
+                st.session_state.audio_clean_wav = None
+                st.session_state.audio_name = None
+                st.session_state.audio_size = None
+                st.session_state.audio_thumb = None
+                st.session_state.last_file_id = None
+                st.session_state.result = None
+                st.rerun()
+
+    else:
+        # Audio Link or YouTube Video Section with Instant Enter-to-Submit & Process Controls
+        st.markdown("<div style='font-size: 14.5px; font-weight: 700; color: #ffffff; margin-bottom: 8px;'>Paste Any Audio Link or YouTube Video URL:</div>", unsafe_allow_html=True)
+        with st.form(key=f"audio_url_form_{st.session_state.get('uploader_key', 0)}", border=False, clear_on_submit=False, enter_to_submit=True):
+            link_col1, link_col2, link_col3 = st.columns([3.6, 1.4, 1.1], gap="small")
+            with link_col1:
+                url_text = st.text_input(
+                    "Audio / YouTube URL",
+                    placeholder="e.g. https://www.youtube.com/watch?v=... or direct .mp3 / .wav link",
+                    label_visibility="collapsed",
+                    key=f"url_input_{st.session_state.get('uploader_key', 0)}"
+                )
+            with link_col2:
+                fetch_btn = st.form_submit_button("LOAD & PROCESS", type="primary", use_container_width=True)
+            with link_col3:
+                clear_link_btn = st.form_submit_button("✕ CLEAR", type="secondary", use_container_width=True, help="Clear search link and loaded track")
+
+        if clear_link_btn:
+            clear_loaded_audio()
+
+        if fetch_btn:
+            if not url_text or not url_text.strip():
+                st.warning("⚠️ Please paste a valid YouTube video URL or audio link before submitting.")
+            else:
+                raw_url = url_text.strip()
+                if is_youtube_url(raw_url):
+                    with st.spinner("▶ Extracting audio stream and thumbnail from YouTube video..."):
+                        yt_bytes, yt_title, yt_thumb, yt_err = download_from_youtube(raw_url)
+                        if yt_err:
+                            st.error(f"❌ {yt_err}")
+                        else:
+                            clean_wav, preview_mp3 = prepare_audio_for_player_and_model(yt_bytes, ext=".mp3")
+                            st.session_state.last_file_id = raw_url
+                            st.session_state.result = None
+                            st.session_state.audio_clean_wav = clean_wav
+                            st.session_state.audio_b64 = base64.b64encode(preview_mp3).decode("utf-8")
+                            st.session_state.audio_name = f"{yt_title}.mp3"
+                            st.session_state.audio_size = f"{len(yt_bytes)/(1024*1024):.1f} MB"
+                            st.session_state.audio_thumb = yt_thumb
+                            st.success(f"✅ Loaded YouTube track: '{yt_title}'")
+                            st.rerun()
+                else:
+                    with st.spinner("Downloading audio stream from direct link..."):
+                        fetched_bytes, fetched_thumb, err = download_audio_from_url(raw_url)
+                        if err:
+                            st.error(f"❌ {err}")
+                        else:
+                            clean_wav, preview_mp3 = prepare_audio_for_player_and_model(fetched_bytes, ext=detect_audio_extension(fetched_bytes))
+                            st.session_state.last_file_id = raw_url
