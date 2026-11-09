@@ -648,3 +648,118 @@ render_html("""
         transform: scale(1.02) !important;
     }
 
+    /* Seamless Borderless Form Container */
+    [data-testid="stForm"] {
+        border: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+    }
+
+    /* Ultra-Premium Segmented Pill Switcher for Radio */
+    [data-testid="stRadio"] {
+        margin: 8px 0 16px 0 !important;
+    }
+    [data-testid="stRadio"] [role="radiogroup"],
+    [data-testid="stRadioHorizontal"] [role="radiogroup"] {
+        gap: 6px !important;
+        background: #141414 !important;
+        padding: 5px !important;
+        border-radius: 9999px !important;
+        border: 1px solid #282828 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        width: fit-content !important;
+        max-width: 100% !important;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6), 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+    }
+    [data-testid="stRadio"] label,
+    [data-testid="stRadioHorizontal"] label {
+        color: #a1a1aa !important;
+        font-weight: 700 !important;
+        font-size: 13.5px !important;
+        padding: 8px 20px !important;
+        border-radius: 9999px !important;
+        cursor: pointer !important;
+        white-space: nowrap !important;
+        background: transparent !important;
+        border: 1px solid transparent !important;
+        transition: all 180ms ease !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        margin: 0 !important;
+    }
+    [data-testid="stRadio"] label:hover,
+    [data-testid="stRadioHorizontal"] label:hover {
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    /* Completely hide ugly browser/baseweb circular radio dots */
+    [data-testid="stRadio"] label > div[aria-hidden="true"],
+    [data-testid="stRadio"] label > div:first-child,
+    [data-testid="stRadio"] input[type="radio"] {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* Active Segment: Sleek elevated dark pill with clean white text & subtle highlight */
+    [data-testid="stRadio"] label:has(input:checked),
+    [data-testid="stRadio"] label[aria-checked="true"] {
+        background: #252525 !important;
+        background-color: #252525 !important;
+        color: #ffffff !important;
+        border: 1px solid #3f3f46 !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45) !important;
+    }
+
+    /* Strip all child backgrounds, eliminating any solid green block behind text */
+    [data-testid="stRadio"] label *,
+    [data-testid="stRadio"] label [data-testid="stMarkdownContainer"],
+    [data-testid="stRadio"] label [data-testid="stMarkdownContainer"] *,
+    [data-testid="stRadio"] label p,
+    [data-testid="stRadio"] label span {
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    [data-testid="stRadio"] label:has(input:checked) *,
+    [data-testid="stRadio"] label[aria-checked="true"] * {
+        color: #ffffff !important;
+        font-weight: 750 !important;
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+
+    /* Mobile Responsive Overrides */
+    @media (max-width: 768px) {
+        html, body { zoom: 1.0; }
+        .block-container {
+            padding-left: 0.85rem !important;
+            padding-right: 0.85rem !important;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab-list"] {
+            border-radius: 12px !important;
+            width: 100% !important;
+            padding: 4px !important;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab"] {
+            padding: 8px 12px !important;
+            font-size: 12px !important;
+        }
+        [data-testid="column"] {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+        }
+    }
+
+    iframe { border: none !important; }
+</style>
+""")
+
+# -----------------------------------------------------------------------------
