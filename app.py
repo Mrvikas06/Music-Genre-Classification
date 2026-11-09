@@ -1818,3 +1818,93 @@ with tab_benchmark:
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 26px; font-size: 14px;">
             <div>
                 <div style="color: #b3b3b3; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 6px;">CHAMPION MODEL</div>
+                <div style="color: #ffffff; font-weight: 800; font-size: 17px;">Support Vector Classifier</div>
+                <div style="color: #7c7c7c; font-size: 13px; margin-top: 4px;">Radial Basis Function (RBF) Kernel</div>
+            </div>
+            <div>
+                <div style="color: #b3b3b3; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 6px;">TEST ACCURACY</div>
+                <div style="color: #1ed760; font-weight: 800; font-size: 17px;">73.50% Top-1</div>
+                <div style="color: #7c7c7c; font-size: 13px; margin-top: 4px;">91.80% Top-2 In-Boundary</div>
+            </div>
+            <div>
+                <div style="color: #b3b3b3; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 6px;">FEATURE VECTOR</div>
+                <div style="color: #ffffff; font-weight: 800; font-size: 17px;">57 Dimensions</div>
+                <div style="color: #7c7c7c; font-size: 13px; margin-top: 4px;">13 MFCCs, Chroma, Centroid, Rolloff, ZCR</div>
+            </div>
+            <div>
+                <div style="color: #b3b3b3; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 6px;">AUDIO SAMPLING</div>
+                <div style="color: #ffffff; font-weight: 800; font-size: 17px;">22,050 Hz Mono</div>
+                <div style="color: #7c7c7c; font-size: 13px; margin-top: 4px;">FFT: 2048 / Hop: 512 / 30.0s Analysis</div>
+            </div>
+        </div>
+    </div>
+    """)
+
+    b1, b2 = st.columns(2)
+    with b1:
+        render_html("""
+        <div class="scroll-reveal" style="background: #181818; border-radius: 12px; padding: 26px; height: 100%;">
+            <div style="font-size: 16px; font-weight: 800; color: #ffffff; margin-bottom: 14px;">57 Spectral Vector Breakdown</div>
+            <ul style="font-size: 14px; color: #b3b3b3; line-height: 1.85; margin: 0; padding-left: 20px;">
+                <li><strong style="color: #ffffff;">MFCC (1-20 Means & Variances):</strong> 40 spectral coefficients capturing timbre envelope.</li>
+                <li><strong style="color: #ffffff;">Chroma STFT (Mean & Var):</strong> 2 vectors quantifying 12 harmonic semitones.</li>
+                <li><strong style="color: #ffffff;">Spectral Centroid & Bandwidth:</strong> 4 vectors measuring perceptual brightness & width.</li>
+                <li><strong style="color: #ffffff;">Spectral Rolloff & ZCR:</strong> 4 vectors determining high-frequency cutoff & noisiness.</li>
+                <li><strong style="color: #ffffff;">Harmonics, Percussive & Tempo:</strong> 7 vectors measuring HPSS separation and BPM.</li>
+            </ul>
+        </div>
+        """)
+    with b2:
+        render_html("""
+        <div class="scroll-reveal" style="background: #181818; border-radius: 12px; padding: 26px; height: 100%;">
+            <div style="font-size: 16px; font-weight: 800; color: #ffffff; margin-bottom: 14px;">Model Benchmark Matrix</div>
+            <div style="font-size: 14px; color: #b3b3b3; line-height: 1.7;">
+                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #242424;">
+                    <span style="color: #ffffff; font-weight: 700;">SVM (RBF Kernel) — Champion</span>
+                    <span style="color: #1ed760; font-weight: 800;">73.50%</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #242424;">
+                    <span>Random Forest (300 Trees)</span>
+                    <span style="color: #ffffff;">68.20%</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #242424;">
+                    <span>K-Nearest Neighbors (k=5)</span>
+                    <span style="color: #ffffff;">65.40%</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 10px 0;">
+                    <span>Logistic Regression (L2)</span>
+                    <span style="color: #ffffff;">64.10%</span>
+                </div>
+            </div>
+        </div>
+        """)
+
+# =============================================================================
+# TAB 4: SESSION HISTORY
+# =============================================================================
+with tab_history:
+    render_html("""
+    <div style="margin-bottom: 26px;">
+        <span style="font-size: 12px; font-weight: 800; color: #1ed760; letter-spacing: 1.5px; text-transform: uppercase;">
+            INFERENCE LOG
+        </span>
+        <h2 style="font-size: clamp(2rem, 1.5rem + 1.5vw, 2.6rem); font-weight: 800; color: #ffffff; margin: 6px 0 8px 0; letter-spacing: -0.03em;">
+            Recent Analyzed Tracks
+        </h2>
+        <p style="font-size: 15px; color: #b3b3b3; margin: 0;">
+            Session history of classifications, confidence ratings, and timestamps.
+        </p>
+    </div>
+    """)
+
+    hist_entries = st.session_state.history
+    if not hist_entries:
+        render_html("""
+        <div style="background: #181818; border-radius: 12px; padding: 42px 24px; text-align: center; color: #7c7c7c;">
+            <div style="font-size: 28px; margin-bottom: 10px;">⏳</div>
+            <div style="font-size: 17px; font-weight: 700; color: #ffffff;">No session inferences logged yet</div>
+            <div style="font-size: 14px; margin-top: 6px;">Upload a track or paste an audio/YouTube link in the Classify tab to see history here.</div>
+        </div>
+        """)
+    else:
+        for idx, item in enumerate(hist_entries):
