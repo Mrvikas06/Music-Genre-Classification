@@ -763,3 +763,103 @@ render_html("""
 """)
 
 # -----------------------------------------------------------------------------
+# Model & Feature Extractor
+# -----------------------------------------------------------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_DIR = os.path.join(BASE_DIR, "models")
+
+def get_ffmpeg_cmd():
+    return setup_ffmpeg()
+
+@st.cache_resource
+def load_model_artifacts():
+    mp = os.path.join(MODEL_DIR, "champion_genre_classifier.pkl")
+    if not os.path.exists(mp):
+        mp = os.path.join(MODEL_DIR, "genre_classifier.pkl")
+    sp = os.path.join(MODEL_DIR, "scaler.pkl")
+    ep = os.path.join(MODEL_DIR, "label_encoder.pkl")
+    if not all(os.path.exists(p) for p in [mp, sp, ep]):
+        return None, None, None
+    return joblib.load(mp), joblib.load(sp), joblib.load(ep)
+
+def prepare_audio_for_player_and_model(raw_bytes: bytes, ext: str = ".wav"):
+    """
+    Normalizes audio into:
+    1) clean_wav: 30-second 22,050 Hz 16-bit mono WAV for Librosa feature extraction (~1.3MB)
+       (GTZAN dataset and models are trained on 30s clips)
+    2) preview_mp3: Full-length track (up to 10 min) for complete playback in the interactive player
+    """
+    in_file = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
+    in_file.write(raw_bytes)
+    in_file.close()
+
+    out_wav = tempfile.NamedTemporaryFile(delete=False, suffix='.wav')
+    out_wav.close()
+    out_mp3 = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
+    out_mp3.close()
+
+    clean_wav = None
+    preview_mp3 = None
+    ffmpeg_bin = get_ffmpeg_cmd()
+
+    try:
+        # Standardized 30-second WAV for ML model inference
+        cmd_wav = [
+            ffmpeg_bin, '-nostdin', '-y', '-i', in_file.name,
+            '-t', '30', '-ar', '22050', '-ac', '1',
+            '-c:a', 'pcm_s16le', out_wav.name
+        ]
+        p1 = subprocess.run(cmd_wav, stdin=subprocess.DEVNULL, capture_output=True, timeout=25)
+        if p1.returncode == 0 and os.path.exists(out_wav.name) and os.path.getsize(out_wav.name) > 0:
+            with open(out_wav.name, 'rb') as f:
+                clean_wav = f.read()
+
+        # Full track for the player: if already MP3 and reasonably sized, keep original; otherwise compress to 128k MP3
+        if ext.lower() == ".mp3" and len(raw_bytes) <= 15 * 1024 * 1024:
+            preview_mp3 = raw_bytes
+        else:
+            cmd_mp3 = [
+                ffmpeg_bin, '-nostdin', '-y', '-i', in_file.name,
+                '-t', '600', '-ar', '44100', '-ac', '2',
+                '-b:a', '128k', out_mp3.name
+            ]
+            p2 = subprocess.run(cmd_mp3, stdin=subprocess.DEVNULL, capture_output=True, timeout=30)
+            if p2.returncode == 0 and os.path.exists(out_mp3.name) and os.path.getsize(out_mp3.name) > 0:
+                with open(out_mp3.name, 'rb') as f:
+                    preview_mp3 = f.read()
+    except Exception:
+        pass
+    finally:
+        for p in [in_file.name, out_wav.name, out_mp3.name]:
+            if os.path.exists(p):
+                try: os.remove(p)
+                except Exception: pass
+
+    # Robust fallback for clean_wav if ffmpeg is unavailable
+    if clean_wav is None:
+        try:
+            sig, sr_in = None, 22050
+            try:
+                sig, sr_in = sf.read(io.BytesIO(raw_bytes), dtype='float32')
+            except Exception:
+                sig, sr_in = librosa.load(io.BytesIO(raw_bytes), sr=22050, duration=30, mono=True)
+            if sig is not None:
+                if len(sig.shape) > 1:
+                    sig = np.mean(sig, axis=1)
+                if sr_in != 22050:
+                    sig = librosa.resample(sig, orig_sr=sr_in, target_sr=22050)
+                max_len = 30 * 22050
+                if len(sig) > max_len:
+                    sig = sig[:max_len]
+                elif len(sig) < max_len:
+                    sig = np.pad(sig, (0, max_len - len(sig)))
+                buf = io.BytesIO()
+                sf.write(buf, sig.astype(np.float32), 22050, format='WAV', subtype='PCM_16')
+                clean_wav = buf.getvalue()
+        except Exception:
+            clean_wav = raw_bytes
+
+    if preview_mp3 is None:
+        preview_mp3 = raw_bytes if len(raw_bytes) <= 15 * 1024 * 1024 else (clean_wav or raw_bytes)
+
+    return clean_wav, preview_mp3
