@@ -1548,3 +1548,153 @@ with tab_classify:
             entry = {
                 "genre": genre.capitalize(),
                 "confidence": round(float(np.max(probs) * 100), 1),
+                "filename": st.session_state.audio_name or "track.wav",
+                "timestamp": datetime.now().strftime("%H:%M:%S"),
+            }
+            hist = st.session_state.history
+            hist.insert(0, entry)
+            st.session_state.history = hist[:10]
+
+            status_box.empty()
+        except Exception as err:
+            status_box.empty()
+            st.error(f"❌ Audio Classification Error: {str(err)}. Please ensure the audio stream is accessible and uncorrupted.")
+
+    # Results Readout
+    res = st.session_state.result
+    if res is not None:
+        champ = res["genre"]
+        conf = res["confidence"]
+        top5 = res["top5"]
+        info = GENRE_TAXONOMY.get(champ.lower(), {
+            "title": champ,
+            "origin": "Global",
+            "era": "Contemporary",
+            "tempo_range": "Variable",
+            "key_marker": "Multi-band acoustic timbre envelope",
+            "desc": "Extracted timbre vectors classified by Support Vector Classifier.",
+            "color": "#1e3264",
+            "bg_tint": "rgba(30, 50, 100, 0.35)"
+        })
+
+        st.markdown('<div style="height: 32px;" id="results"></div>', unsafe_allow_html=True)
+
+
+        r1, r2 = st.columns([5, 7], gap="large")
+
+        with r1:
+            render_html(f"""
+            <div class="scroll-reveal" style="background: linear-gradient(180deg, #242424 0%, #181818 100%); box-shadow: rgba(0, 0, 0, 0.5) 0px 8px 24px; border-radius: 12px; padding: 34px 28px; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px;">
+                        <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #000000; background: #1ed760; padding: 6px 14px; border-radius: 9999px;">
+                            PREDICTED GENRE
+                        </span>
+                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #b3b3b3;">
+                            {res['inference_ms']}ms inference
+                        </span>
+                    </div>
+                    <div style="font-size: clamp(2.8rem, 2.2rem + 2.5vw, 4.2rem); font-weight: 800; color: #ffffff; line-height: 1; letter-spacing: -0.03em; margin-bottom: 8px;">
+                        {champ}
+                    </div>
+                    <div style="font-size: 22px; color: #1ed760; font-weight: 700; margin-bottom: 22px;">
+                        {conf}% Confidence
+                    </div>
+                    <div style="font-size: 14px; color: #b3b3b3; line-height: 1.6; border-top: 1px solid #282828; padding-top: 18px;">
+                        {info['desc']}
+                    </div>
+                </div>
+                <div style="margin-top: 24px; display: flex; gap: 10px; flex-wrap: wrap; border-top: 1px solid #282828; padding-top: 16px;">
+                    <span style="background: #242424; color: #ffffff; padding: 6px 14px; border-radius: 9999px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">
+                        ORIGIN: {info['origin']}
+                    </span>
+                    <span style="background: #242424; color: #ffffff; padding: 6px 14px; border-radius: 9999px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">
+                        ERA: {info['era']}
+                    </span>
+                </div>
+            </div>
+            """)
+
+        with r2:
+            bars_html = ""
+            for i, item in enumerate(top5):
+                g = item["genre"]
+                s = item["score"]
+                is_c = (i == 0)
+                fill_bg = "#1ed760" if is_c else "#535353"
+                txt_color = "#ffffff" if is_c else "#b3b3b3"
+                bars_html += f"""<div style="margin-bottom: 18px;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 14px;"><span style="color: {txt_color}; font-weight: {'700' if is_c else '500'};">{g}</span><span style="color: {'#1ed760' if is_c else '#b3b3b3'}; font-weight: 700; font-variant-numeric: tabular-nums;">{s}%</span></div><div style="height: 6px; width: 100%; background: #282828; border-radius: 3px; overflow: hidden;"><div style="height: 100%; width: {s}%; background: {fill_bg}; border-radius: 3px; transition: width 400ms ease;"></div></div></div>"""
+
+            render_html(f"""
+            <div class="scroll-reveal" style="background: #181818; box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 8px; border-radius: 12px; padding: 28px 24px; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="font-size: 13px; font-weight: 800; color: #b3b3b3; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 22px;">
+                        POSTERIOR PROBABILITY BREAKDOWN
+                    </div>
+                    {bars_html}
+                </div>
+                <div style="font-size: 12px; color: #7c7c7c; border-top: 1px solid #282828; padding-top: 14px;">
+                    57 Features Concat • Scaler Normalized • RBF Kernel SVM
+                </div>
+            </div>
+            """)
+
+        # MFCC Timbre Spectrum
+        st.markdown('<div style="height: 30px;"></div>', unsafe_allow_html=True)
+        render_html("""
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid #282828; padding-bottom: 12px;">
+            <span style="font-size: 19px; font-weight: 800; color: #ffffff;">
+                Acoustic Timbre Fingerprint
+            </span>
+            <span style="font-size: 12px; font-weight: 700; color: #1ed760; text-transform: uppercase; letter-spacing: 1.2px;">
+                13 MFCC COEFFICIENTS
+            </span>
+        </div>
+        """)
+
+        mfcc_vals = res["mfcc_means"]
+        mfcc_max = max([abs(v) for v in mfcc_vals]) if mfcc_vals else 1
+        mfcc_bars_html = ""
+        for i, v in enumerate(mfcc_vals):
+            lbl = f"MFCC-{i+1:02d}"
+            pct = min(100, (abs(v) / mfcc_max) * 100)
+            is_pos = v >= 0
+            left_fill = f'<div style="width:{pct:.1f}%; height:100%; background:#535353; border-radius:2px 0 0 2px;"></div>' if not is_pos else ''
+            right_fill = f'<div style="width:{pct:.1f}%; height:100%; background:#1ed760; border-radius:0 2px 2px 0;"></div>' if is_pos else ''
+            mfcc_bars_html += f"""<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 9px; font-family: 'JetBrains Mono', monospace; font-size: 12px;"><span style="width: 64px; color: #b3b3b3; text-align: right;">{lbl}</span><div style="flex: 1; height: 9px; background: #282828; border-radius: 4px; display: flex; position: relative;"><div style="width: 50%; height: 100%; display: flex; justify-content: flex-end;">{left_fill}</div><div style="width: 1px; height: 100%; background: #7c7c7c; z-index: 2;"></div><div style="width: 50%; height: 100%; display: flex; justify-content: flex-start;">{right_fill}</div></div><span style="width: 58px; color: #ffffff; text-align: right; font-variant-numeric: tabular-nums;">{v:+.1f}</span></div>"""
+
+        render_html(f"""
+        <div class="scroll-reveal" style="background: #181818; box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 8px; border-radius: 12px; padding: 26px; margin-bottom: 30px;">
+            <div style="display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #7c7c7c; margin-bottom: 14px; padding-left: 74px; padding-right: 68px;">
+                <span>← Negative Harmonics</span>
+                <span>Center (0.0)</span>
+                <span>Positive Harmonics →</span>
+            </div>
+            {mfcc_bars_html}
+        </div>
+        """)
+
+        # Physical Acoustic 4-Card Grid
+        m1, m2, m3, m4 = st.columns(4)
+        with m1:
+            render_html(f"""
+            <div class="scroll-reveal" style="background: #181818; box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 8px; border-radius: 10px; padding: 24px;">
+                <div style="font-size: 11px; font-weight: 800; color: #b3b3b3; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px;">SPECTRAL CENTROID</div>
+                <div style="font-size: 26px; font-weight: 800; color: #ffffff;">{res['spectral_centroid']:,} Hz</div>
+                <div style="font-size: 13px; color: #7c7c7c; margin-top: 4px;">Brightness center of mass</div>
+            </div>
+            """)
+
+        with m2:
+            render_html(f"""
+            <div class="scroll-reveal" style="background: #181818; box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 8px; border-radius: 10px; padding: 24px;">
+                <div style="font-size: 11px; font-weight: 800; color: #b3b3b3; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px;">SPECTRAL ROLLOFF</div>
+                <div style="font-size: 26px; font-weight: 800; color: #ffffff;">{res['spectral_rolloff']:,} Hz</div>
+                <div style="font-size: 13px; color: #7c7c7c; margin-top: 4px;">85% frequency threshold</div>
+            </div>
+            """)
+
+        with m3:
+            render_html(f"""
+            <div class="scroll-reveal" style="background: #181818; box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 8px; border-radius: 10px; padding: 24px;">
+                <div style="font-size: 11px; font-weight: 800; color: #b3b3b3; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px;">ZERO-CROSSING RATE</div>
