@@ -98,3 +98,79 @@ def train_cnn_model(data_path="data/features_30_sec.csv", output_dir="models"):
     model.add(layers.Dense(num_classes, activation="softmax"))
 
     model.summary()
+
+    # -------------------------------------------------------------
+    # Step 11: Compile the Convolutional Neural Network
+    # -------------------------------------------------------------
+    model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=0.0005),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    # -------------------------------------------------------------
+    # Step 12: Train the CNN for Music Genre Classification
+    # -------------------------------------------------------------
+    print("\n--- Training 1D CNN Model ---")
+    callbacks = [
+        keras.callbacks.EarlyStopping(monitor="val_loss", patience=15, restore_best_weights=True)
+    ]
+    history = model.fit(
+        X_train_cnn,
+        y_train,
+        validation_data=(X_test_cnn, y_test),
+        epochs=60,
+        batch_size=32,
+        callbacks=callbacks,
+        verbose=1,
+    )
+
+    # Evaluate
+    test_loss, test_acc = model.evaluate(X_test_cnn, y_test, verbose=0)
+    print(f"\nFinal Test Loss: {test_loss:.4f} | Final Test Accuracy: {test_acc * 100:.2f}%")
+
+    y_pred_probs = model.predict(X_test_cnn)
+    y_pred = np.argmax(y_pred_probs, axis=1)
+    print("\nClassification Report for 1D CNN:\n")
+    print(classification_report(y_test, y_pred, target_names=label_encoder.classes_))
+
+    # -------------------------------------------------------------
+    # Step 13: Visualize Model Training History with Matplotlib
+    # -------------------------------------------------------------
+    os.makedirs(output_dir, exist_ok=True)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+    # Accuracy plot
+    ax1.plot(history.history["accuracy"], label="Train Accuracy", linewidth=2)
+    ax1.plot(history.history["val_accuracy"], label="Validation Accuracy", linewidth=2)
+    ax1.set_title("Model Accuracy Over Epochs", fontsize=13, fontweight="bold")
+    ax1.set_xlabel("Epoch")
+    ax1.set_ylabel("Accuracy")
+    ax1.legend()
+    ax1.grid(True)
+
+    # Loss plot
+    ax2.plot(history.history["loss"], label="Train Loss", linewidth=2)
+    ax2.plot(history.history["val_loss"], label="Validation Loss", linewidth=2)
+    ax2.set_title("Model Loss Over Epochs", fontsize=13, fontweight="bold")
+    ax2.set_xlabel("Epoch")
+    ax2.set_ylabel("Loss")
+    ax2.legend()
+    ax2.grid(True)
+
+    plt.tight_layout()
+    history_plot_path = os.path.join(output_dir, "cnn_training_history.png")
+    plt.savefig(history_plot_path)
+    plt.close()
+    print(f"Training history visualization saved to: {history_plot_path}")
+
+    # -------------------------------------------------------------
+    # Step 14: Save a Trained Keras CNN Model
+    # -------------------------------------------------------------
+    model_save_path = os.path.join(output_dir, "cnn_model.keras")
+    model.save(model_save_path)
+    print(f"Trained Keras CNN model saved to: {model_save_path}")
+
+
+if __name__ == "__main__":
+    train_cnn_model()
