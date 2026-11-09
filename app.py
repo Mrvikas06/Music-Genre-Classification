@@ -1248,3 +1248,153 @@ with tab_classify:
                         else:
                             clean_wav, preview_mp3 = prepare_audio_for_player_and_model(fetched_bytes, ext=detect_audio_extension(fetched_bytes))
                             st.session_state.last_file_id = raw_url
+                            st.session_state.result = None
+                            st.session_state.audio_clean_wav = clean_wav
+                            st.session_state.audio_b64 = base64.b64encode(preview_mp3).decode("utf-8")
+                            fname = raw_url.split("/")[-1].split("?")[0] or "web_stream.mp3"
+                            if not fname.endswith(('.wav', '.mp3', '.ogg', '.flac')):
+                                fname += detect_audio_extension(fetched_bytes)
+                            st.session_state.audio_name = fname
+                            st.session_state.audio_size = f"{len(fetched_bytes)/(1024*1024):.1f} MB"
+                            st.session_state.audio_thumb = fetched_thumb
+                            st.success("✅ Direct audio stream loaded successfully!")
+                            st.rerun()
+
+    # Track Player Component with Thumbnails, Skip 10s, Rewind 10s, Loop, & Mute
+    if st.session_state.audio_b64:
+        # Header Row with Track Status and Clear/Remove Button
+        track_hdr_left, track_hdr_right = st.columns([4.2, 1.2], gap="medium")
+        with track_hdr_left:
+            st.markdown(f"""
+            <div style="display: flex; align-items: center; gap: 10px; height: 38px;">
+                <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #1ed760; box-shadow: 0 0 10px #1ed760;"></span>
+                <span style="font-size: 13px; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 1.2px;">Loaded Track</span>
+                <span style="font-size: 13px; color: #b3b3b3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 420px;">— {st.session_state.audio_name}</span>
+            </div>
+            """, unsafe_allow_html=True)
+        with track_hdr_right:
+            if st.button("✕ REMOVE", type="secondary", use_container_width=True, key="btn_remove_active_song", help="Remove loaded song and reset analyzer"):
+                clear_loaded_audio()
+        fn = st.session_state.audio_name or "stream_audio.wav"
+        sz = st.session_state.audio_size or "Audio"
+        mime = "audio/mpeg" if fn.endswith(".mp3") else "audio/wav"
+        b64_str = st.session_state.audio_b64
+        thumb_url = st.session_state.audio_thumb
+
+        # Cover Thumbnail HTML
+        if thumb_url:
+            thumb_html = f"""<img src="{thumb_url}" alt="Cover" style="width: 62px; height: 62px; border-radius: 8px; object-fit: cover; box-shadow: 0 4px 16px rgba(0,0,0,0.5); flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1);" />"""
+        else:
+            thumb_html = """<div style="width: 60px; height: 60px; background: #222222; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.4); border: 1px solid #333333;"><svg width="28" height="28" viewBox="0 0 24 24" fill="#1ed760"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>"""
+
+        player_html = f"""
+        <style>
+            * {{ box-sizing: border-box; }}
+            body {{
+                margin: 0;
+                padding: 0;
+                background: transparent;
+                overflow: hidden;
+                font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+            }}
+            .player-wrap {{
+                background: #181818;
+                box-shadow: rgba(0, 0, 0, 0.5) 0px 8px 24px;
+                border: 1px solid #282828;
+                border-radius: 14px;
+                padding: 16px 24px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 20px;
+            }}
+            .ctrl-btn {{
+                background: none;
+                border: none;
+                color: #b3b3b3;
+                cursor: pointer;
+                padding: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                transition: all 130ms ease;
+            }}
+            .ctrl-btn:hover {{
+                color: #ffffff;
+                background: rgba(255, 255, 255, 0.08);
+                transform: scale(1.1);
+            }}
+            .ctrl-btn:active {{
+                transform: scale(0.95);
+            }}
+            @media (max-width: 680px) {{
+                .player-wrap {{
+                    flex-direction: column !important;
+                    align-items: stretch !important;
+                    padding: 14px 16px !important;
+                    gap: 12px !important;
+                }}
+            }}
+        </style>
+        <div class="player-wrap">
+            <!-- Left: Cover / Thumbnail & Meta -->
+            <div style="display: flex; align-items: center; gap: 14px; min-width: 220px; max-width: 340px; overflow: hidden;">
+                {thumb_html}
+                <div style="overflow: hidden;">
+                    <div style="font-size: 14.5px; font-weight: 750; color: #ffffff; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;" title="{fn}">{fn}</div>
+                    <div style="font-size: 12px; color: #b3b3b3; margin-top: 3px;">Track Audio • {sz}</div>
+                </div>
+            </div>
+
+            <!-- Center: Player Controls (Rewind 10s, Play/Pause, Forward 10s, Loop, Mute) -->
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 580px;">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <!-- Rewind 10s -->
+                    <button id="pRev" class="ctrl-btn" title="Rewind 10 seconds" aria-label="Rewind 10 seconds">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/>
+                        </svg>
+                    </button>
+
+                    <!-- Play / Pause Button -->
+                    <button id="pBtn" title="Play / Pause" style="width: 44px; height: 44px; border-radius: 50%; border: none; background: #1ed760; color: #000000; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 140ms ease; box-shadow: 0 4px 14px rgba(30, 215, 96, 0.45);">
+                        <svg id="pIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="7,4 20,12 7,20"/></svg>
+                    </button>
+
+                    <!-- Forward 10s -->
+                    <button id="pFwd" class="ctrl-btn" title="Skip Forward 10 seconds" aria-label="Skip Forward 10 seconds">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/>
+                        </svg>
+                    </button>
+
+                    <!-- Loop Toggle -->
+                    <button id="pLoop" class="ctrl-btn" title="Toggle Loop" aria-label="Toggle Loop">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="17 1 21 5 17 9"></polyline>
+                            <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                            <polyline points="7 23 3 19 7 15"></polyline>
+                            <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                        </svg>
+                    </button>
+
+                    <!-- Mute Toggle -->
+                    <button id="pMute" class="ctrl-btn" title="Toggle Mute" aria-label="Toggle Mute">
+                        <svg id="pMuteIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Scrubber Track & Timestamps -->
+                <div style="width: 100%; display: flex; align-items: center; gap: 12px;">
+                    <span id="pCurr" style="font-size: 12px; color: #b3b3b3; font-variant-numeric: tabular-nums; width: 34px; text-align: right;">0:00</span>
+                    <div id="pTrack" style="flex: 1; height: 5px; background: #383838; border-radius: 3px; cursor: pointer; position: relative;">
+                        <div id="pFill" style="height: 100%; width: 0%; background: #1ed760; border-radius: 3px; pointer-events: none;"></div>
+                    </div>
+                    <span id="pDur" style="font-size: 12px; color: #b3b3b3; font-variant-numeric: tabular-nums; width: 34px;">--:--</span>
+                </div>
+            </div>
+            <audio id="pAudio" src="data:{mime};base64,{b64_str}"></audio>
