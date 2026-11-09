@@ -1908,3 +1908,29 @@ with tab_history:
         """)
     else:
         for idx, item in enumerate(hist_entries):
+            render_html(f"""
+            <div style="background: #181818; box-shadow: 0 4px 10px rgba(0,0,0,0.25); border-radius: 10px; padding: 18px 24px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <span style="font-size: 13px; color: #7c7c7c; font-family: 'JetBrains Mono', monospace;">#{idx+1:02d}</span>
+                    <span style="font-size: 15px; font-weight: 700; color: #ffffff;">{item['filename']}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <span style="background: #242424; color: #1ed760; padding: 5px 14px; border-radius: 9999px; font-size: 13px; font-weight: 800;">
+                        {item['genre']} • {item['confidence']}%
+                    </span>
+                    <span style="font-size: 13px; color: #7c7c7c; font-family: 'JetBrains Mono', monospace;">
+                        {item['timestamp']}
+                    </span>
+                </div>
+            </div>
+            """)
+
+# -----------------------------------------------------------------------------
+# MINIMAL FOOTER
+# -----------------------------------------------------------------------------
+render_html("""
+<div style="text-align: center; border-top: 1px solid #242424; padding-top: 40px; margin-top: 52px; font-size: 13px; color: #7c7c7c;">
+    <div style="font-weight: 700; color: #b3b3b3;">Music Genre Classification System</div>
+    <div style="margin-top: 6px; font-size: 12px;">Powered by GTZAN Dataset, Librosa DSP & Scikit-Learn</div>
+</div>
+""")
