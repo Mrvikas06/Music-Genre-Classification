@@ -148,3 +148,103 @@ GENRE_TAXONOMY = {
     "classical": {
         "title": "Classical",
         "icon": "🎻",
+        "origin": "Western Europe",
+        "era": "9th century – present",
+        "tempo_range": "40 – 160 BPM",
+        "key_marker": "Dynamic range, uncompressed acoustic orchestration, intricate harmonic forms",
+        "desc": "Defined by expansive dynamic headroom, complex orchestral counterpoint, and acoustic timbral purity. Exhibits premier spectral centroid separation across strings and orchestral brass.",
+        "color": "#7d4b32",
+        "bg_tint": "rgba(125, 75, 50, 0.35)"
+    },
+    "country": {
+        "title": "Country",
+        "icon": "🪕",
+        "origin": "Southern USA",
+        "era": "1920s – present",
+        "tempo_range": "80 – 130 BPM",
+        "key_marker": "Acoustic strings (banjo, fiddle, pedal steel), diatonic storytelling form",
+        "desc": "Harmonically anchored by diatonic folk progressions and organic acoustic strings. Feature vectors cluster between folk and blues with prominent vocal-forward master compression.",
+        "color": "#d84000",
+        "bg_tint": "rgba(216, 64, 0, 0.35)"
+    },
+    "disco": {
+        "title": "Disco",
+        "icon": "🪩",
+        "origin": "New York, USA",
+        "era": "1970s – 1980s",
+        "tempo_range": "115 – 130 BPM",
+        "key_marker": "Four-on-the-floor kick, syncopated electric bass, orchestral string accents",
+        "desc": "Features metronomic 4/4 timing with open hi-hats on offbeats and syncopated slap bass. Spectral profiles reveal high low-end energy paired with shimmering high-frequency string sections.",
+        "color": "#dc148c",
+        "bg_tint": "rgba(220, 20, 140, 0.35)"
+    },
+    "hiphop": {
+        "title": "Hip-Hop",
+        "icon": "🎤",
+        "origin": "Bronx, New York, USA",
+        "era": "1970s – present",
+        "tempo_range": "80 – 105 BPM",
+        "key_marker": "Sub-bass 808s, transient breakbeats, rhythmic speech cadences",
+        "desc": "Anchored by programmed drum break transients, punchy 808 sub-bass, and syncopated vocal delivery. High energy density concentrated below 80 Hz with sparse mid-range harmonic density.",
+        "color": "#ba5d07",
+        "bg_tint": "rgba(186, 93, 7, 0.35)"
+    },
+    "jazz": {
+        "title": "Jazz",
+        "icon": "🎷",
+        "origin": "New Orleans, USA",
+        "era": "1900s – present",
+        "tempo_range": "70 – 240 BPM",
+        "key_marker": "Extended chord voicings (7ths, 9ths, 13ths), swing feel, modal improvisation",
+        "desc": "Displays intricate harmonic voice leading, polyrhythmic swing, and modal interchange. Chroma feature vectors exhibit high entropy due to frequent key modulation and extended chords.",
+        "color": "#477d95",
+        "bg_tint": "rgba(71, 125, 149, 0.35)"
+    },
+    "metal": {
+        "title": "Metal",
+        "icon": "⚡",
+        "origin": "UK / USA",
+        "era": "Late 1960s – present",
+        "tempo_range": "100 – 220 BPM",
+        "key_marker": "High-gain distorted guitars, double-bass transients, aggressive vocal delivery",
+        "desc": "Characterized by saturated harmonic overdrive, rapid double-kick percussion, and dense power riffs. Spectral rolloff and zero-crossing rates remain elevated across all frequency registers.",
+        "color": "#503750",
+        "bg_tint": "rgba(80, 55, 80, 0.4)"
+    },
+    "pop": {
+        "title": "Pop",
+        "icon": "📻",
+        "origin": "USA / UK",
+        "era": "1950s – present",
+        "tempo_range": "100 – 128 BPM",
+        "key_marker": "Compressed dynamic range, melodic hook symmetry, radio-mastered vocal curve",
+        "desc": "Engineered for instantaneous melodic retention, verse-chorus symmetry, and controlled dynamic range. Centroid and bandwidth cluster tightly due to commercial multi-band mastering.",
+        "color": "#8d67ab",
+        "bg_tint": "rgba(141, 103, 171, 0.35)"
+    },
+    "reggae": {
+        "title": "Reggae",
+        "icon": "🌴",
+        "origin": "Jamaica",
+        "era": "1960s – present",
+        "tempo_range": "60 – 90 BPM",
+        "key_marker": "Offbeat guitar chop ('skank'), deep bass guitar root notes, relaxed tempo",
+        "desc": "Distinguished by staccato offbeat guitar and piano accents on beats two and four, supported by heavy bass guitar fundamentals and relaxed half-time drumming.",
+        "color": "#006450",
+        "bg_tint": "rgba(0, 100, 80, 0.35)"
+    },
+    "rock": {
+        "title": "Rock",
+        "icon": "🎸",
+        "origin": "USA / UK",
+        "era": "1950s – present",
+        "tempo_range": "100 – 150 BPM",
+        "key_marker": "Overdriven electric guitar riffs, snare drum backbeat, driving bassline",
+        "desc": "Centers on electric guitars, bass, and acoustic drum kits. Occupies an aggressive mid-frequency register with high-energy pick transients and steady backbeat snare hits.",
+        "color": "#e91429",
+        "bg_tint": "rgba(233, 20, 41, 0.35)"
+    },
+}
+
+# -----------------------------------------------------------------------------
+# Global Styling (106% Zoom Scale, Mobile-First Layout, Dark Ambient Glow)
