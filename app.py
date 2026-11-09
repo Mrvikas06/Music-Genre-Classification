@@ -1058,3 +1058,78 @@ def download_from_youtube(yt_url):
     try:
         ffmpeg_bin = get_ffmpeg_cmd()
         out_tmpl = os.path.join(tempfile.gettempdir(), f"yt_{int(time.time())}_%(id)s.%(ext)s")
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'ffmpeg_location': os.path.dirname(ffmpeg_bin) if os.path.isabs(ffmpeg_bin) else None,
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+            'outtmpl': out_tmpl,
+            'noplaylist': True,
+            'quiet': True,
+            'no_warnings': True,
+            'max_filesize': 40 * 1024 * 1024,
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(yt_url, download=True)
+            title = info.get('title', 'YouTube Audio Track')
+            thumbnail = info.get('thumbnail')
+            if info.get('thumbnails'):
+                try:
+                    thumbnail = info['thumbnails'][-1].get('url') or thumbnail
+                except Exception:
+                    pass
+            base_fn = ydl.prepare_filename(info)
+            mp3_fn = os.path.splitext(base_fn)[0] + ".mp3"
+            if not os.path.exists(mp3_fn) and os.path.exists(base_fn):
+                mp3_fn = base_fn
+            if not os.path.exists(mp3_fn):
+                return None, None, None, "Failed to extract audio track from YouTube video."
+            
+            with open(mp3_fn, "rb") as f:
+                data = f.read()
+            try:
+                os.remove(mp3_fn)
+            except Exception:
+                pass
+            return data, title, thumbnail, None
+    except Exception as e:
+        return None, None, None, f"YouTube extraction error: {str(e)}"
+
+model, scaler, encoder = load_model_artifacts()
+if model is None or scaler is None or encoder is None:
+    st.error(f"⚠️ Warning: Machine learning models could not be loaded from '{MODEL_DIR}'. Please check that model files are present.")
+
+# -----------------------------------------------------------------------------
+# TOP NAVIGATION (Enlarged & Prominent High-Impact Header)
+# -----------------------------------------------------------------------------
+render_html("""
+<div style="position: sticky; top: 0; z-index: 100; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); background: rgba(18, 18, 18, 0.95); border-bottom: 1px solid #282828; padding: 22px 0 24px 0; margin-bottom: 34px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: #1ed760; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 28px rgba(30, 215, 96, 0.55); flex-shrink: 0;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.6" stroke-linecap="round">
+                    <line x1="4" y1="10" x2="4" y2="14"></line>
+                    <line x1="9" y1="5" x2="9" y2="19"></line>
+                    <line x1="14" y1="8" x2="14" y2="16"></line>
+                    <line x1="19" y1="11" x2="19" y2="13"></line>
+                </svg>
+            </div>
+            <div>
+                <span style="font-size: clamp(26px, 2.6vw, 36px); font-weight: 900; color: #ffffff; letter-spacing: -0.03em; line-height: 1.1; display: block;">Music Genre Classification</span>
+                <span style="font-size: 13px; font-weight: 600; color: #1ed760; letter-spacing: 0.8px; text-transform: uppercase;">Acoustic DSP & Machine Learning Workstation</span>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="background: #202020; color: #b3b3b3; padding: 10px 22px; border-radius: 9999px; font-size: 13.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; border: 1px solid #333333;">
+                SVM RBF KERNEL
+            </span>
+            <span style="background: #1ed760; color: #000000; padding: 10px 22px; border-radius: 9999px; font-size: 13.5px; font-weight: 850; text-transform: uppercase; letter-spacing: 1.2px; box-shadow: 0 0 18px rgba(30, 215, 96, 0.4);">
+                73.50% ACC
+            </span>
+        </div>
+    </div>
+</div>
+""")
